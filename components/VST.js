@@ -1,5 +1,6 @@
 import React from "react";
-import { Oscillator } from './Oscillator';
+import Keyboard from './Keyboard';
+import SelectWaveform from './SelectWaveform';
 
 class VST extends React.Component {
   state = {
@@ -16,35 +17,37 @@ class VST extends React.Component {
     this.setState({ context: audioContext });
   }
 
-  toggleSound = () => {
-    if (!this.state.playing) {
-      const oscillator = this.state.context.createOscillator();
-      oscillator.connect(this.state.context.destination);
-      oscillator.start();
-      this.setState({ osc: oscillator, playing: true });
-    } else {
-      this.setState({ playing: false });
-      this.state.osc.stop();
-    }
-  };
+  playTone = ({ frequency }) => {
+    const oscillator = this.state.context.createOscillator();
+    oscillator.connect(this.state.context.destination);
+    const type = this.state.oscType;
+    oscillator.frequency.value = frequency;
+    oscillator.start();
+    this.setState({ osc: oscillator, playing: true });
+  }
 
-  handleVolume = event => {
-    event.preventDefault();
-    const volume = Number(event.target.value) / 100;
-    this.setState({ oscVolume: volume });
-  };
+  notePressed = (e) => {
+    let frequency = e.target.dataset;
+    this.playTone(frequency);
+  }
+
+  noteReleased = (e) => {
+    this.setState({ playing: false });
+    this.state.osc.frequency.value = null;
+    this.state.osc.stop();
+  }
+
+  changeWaveformType = (waveformType) => {
+    const { type } = this.state.osc;
+    this.setState({ type: waveformType });
+  }
 
   render() {
     return (
       <section>
         <div className="vst-visuals">Audio Wave here </div>
-        <Oscillator
-          osc={this.state.osc}
-          type={this.state.oscType}
-          oscDetuneVal={this.state.oscDetuneVal}
-          toggleSound={this.toggleSound}
-          handleVolume={this.handleVolume}
-        />
+        <SelectWaveform changeWaveformType={this.changeWaveformType} />
+        <Keyboard notePressed={this.notePressed} noteReleased={this.noteReleased} />
         <div className="vst-controls">Audio Controls here</div>
       </section>
     );
